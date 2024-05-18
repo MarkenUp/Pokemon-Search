@@ -7,6 +7,18 @@ interface Pokemon {
   name: string;
   url: string;
   imageUrl?: string;
+  types?: string[];
+  height?: number;
+  weight?: number;
+  baseExperience: number;
+}
+
+interface PokemonType {
+  slot: number;
+  type: {
+    name: string;
+    url: string;
+  };
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -17,6 +29,9 @@ const PokemonComponent: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [typeFilter, setTypeFilter] = useState<string>("");
+  const [sortCriteria, setSortCriteria] = useState<string>("name");
+  const [sortDirection, setSortDirection] = useState<string>("asc");
 
   useEffect(() => {
     const fetchPokemons = async () => {
@@ -31,9 +46,16 @@ const PokemonComponent: React.FC = () => {
           basicPokemons.map(async (pokemon: Pokemon) => {
             try {
               const details = await axios.get(pokemon.url);
+              const types = details.data.types.map(
+                (type: PokemonType) => type.type.name
+              );
               return {
                 ...pokemon,
                 imageUrl: details.data.sprites.front_default,
+                types,
+                height: details.data.height,
+                weight: details.data.weight,
+                baseExperience: details.data.base_experience,
               };
             } catch (detailsError) {
               console.error(
@@ -59,16 +81,60 @@ const PokemonComponent: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const filteredPokemons = pokemons.filter((pokemon) =>
-    pokemon.name.toLowerCase().includes(searchQuery)
+  const handleTypeFilter = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setTypeFilter(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleSortCriteria = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortCriteria(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleSortDirection = () => {
+    setSortDirection((prevDirection) =>
+      prevDirection === "asc" ? "desc" : "asc"
+    );
+    setCurrentPage(1);
+  };
+
+  // Filter pokemon by type
+  const filteredPokemons = pokemons.filter(
+    (pokemon) =>
+      pokemon.name.toLowerCase().includes(searchQuery) &&
+      (typeFilter ? pokemon.types?.includes(typeFilter) : true)
   );
+
+  // Sort the filtered Pokémon list based on the selected criteria and direction
+  const sortedPokemons = filteredPokemons.sort((a, b) => {
+    switch (sortCriteria) {
+      case "name":
+        return sortDirection === "asc"
+          ? a.name.localeCompare(b.name)
+          : b.name.localeCompare(a.name);
+      case "height":
+        return sortDirection === "asc"
+          ? (a.height ?? 0) - (b.height ?? 0)
+          : (b.height ?? 0) - (a.height ?? 0);
+      case "weight":
+        return sortDirection === "asc"
+          ? (a.weight ?? 0) - (b.weight ?? 0)
+          : (b.weight ?? 0) - (a.weight ?? 0);
+      case "baseExperience":
+        return sortDirection === "asc"
+          ? (a.baseExperience ?? 0) - (a.baseExperience ?? 0)
+          : (b.baseExperience ?? 0) - (a.baseExperience ?? 0);
+      default:
+        return 0;
+    }
+  });
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const totalPages = Math.ceil(filteredPokemons.length / ITEMS_PER_PAGE);
-  const displayedPokemons = filteredPokemons.slice(
+  const totalPages = Math.ceil(sortedPokemons.length / ITEMS_PER_PAGE);
+  const displayedPokemons = sortedPokemons.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -124,21 +190,67 @@ const PokemonComponent: React.FC = () => {
         onChange={handleSearch}
         className="border-2 p-2 rounded-lg w-5/12 hover:border-black hover:shadow-xl font-semibold mb-5"
       />
+      <select
+        value={typeFilter}
+        onChange={handleTypeFilter}
+        className="border-2 p-2 rounded-lg mb-5"
+      >
+        <option value="">All</option>
+        <option value="grass">Grass</option>
+        <option value="fire">Fire</option>
+        <option value="water">Water</option>
+        <option value="poison">Poison</option>
+        <option value="bug">Bug</option>
+        <option value="rock">Rock</option>
+        <option value="electric">Electric</option>
+        <option value="fairy">Fairy</option>
+        <option value="psychic">Psychic</option>
+        <option value="ghost">Ghost</option>
+        <option value="ground">Ground</option>
+        <option value="dark">Dark</option>
+        <option value="steel">Steel</option>
+        <option value="ice">Ice</option>
+        <option value="flying">Flying</option>
+        <option value="normal">Normal</option>
+        <option value="fighting">Fighting</option>
+        <option value="dragon">Dragon</option>
+      </select>
+      <div className="flex justify-between items-center w-5/12 mb-5">
+        <select
+          value={sortCriteria}
+          onChange={handleSortCriteria}
+          className="border-2 p-2 rounded-lg"
+        >
+          <option value="name">Name</option>
+          <option value="height">Height</option>
+          <option value="weight">Weight</option>
+          <option value="baseExperience">Base Experience</option>
+        </select>
+        <button
+          onClick={handleSortDirection}
+          className=" bg-gray-200 p-3 rounded-lg"
+        >
+          Sort Direction: {sortDirection === "asc" ? "Ascending" : "Descending"}
+        </button>
+      </div>
       <div>
-        <ul className="grid grid-cols-5 gap-4 mt-10">
+        <ul className="grid grid-cols-5 gap-6 mt-10">
           {displayedPokemons.map((pokemon, index) => (
-            <li
-              key={index}
-              className="bg-gray-200 p-2 rounded text-center font-semibold hover:bg-gray-400"
-            >
-              <Link to={`/pokemon/${pokemon.url.split("/")[6]}`} key={index}>
-                <img
-                  src={pokemon.imageUrl}
-                  alt={pokemon.name}
-                  className="w-20 h-20 object-contain mx-auto mb-2"
-                />
-                {pokemon.name}
-              </Link>
+            <li key={index} className="p-4">
+              <div className="max-w-xs rounded overflow-hidden shadow-lg bg-white">
+                <Link to={`/pokemon/${pokemon.url.split("/")[6]}`} key={index}>
+                  <img
+                    src={pokemon.imageUrl}
+                    alt={pokemon.name}
+                    className="object-contain mx-auto"
+                  />
+                  <div className="px-6 py-4">
+                    <div className="font-bold text-xl mb-2 text-center capitalize">
+                      {pokemon.name}
+                    </div>
+                  </div>
+                </Link>
+              </div>
             </li>
           ))}
         </ul>
