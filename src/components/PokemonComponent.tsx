@@ -133,7 +133,7 @@ const PokemonComponent: React.FC = () => {
     setCurrentPage(page);
   };
 
-  const totalPages = Math.ceil(sortedPokemons.length / ITEMS_PER_PAGE);
+  const totalPages = Math.ceil(filteredPokemons.length / ITEMS_PER_PAGE);
   const displayedPokemons = sortedPokemons.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
@@ -183,38 +183,40 @@ const PokemonComponent: React.FC = () => {
 
   return (
     <div className="flex flex-col justify-center items-center mt-8">
-      <input
-        type="text"
-        placeholder="Search Pokemon..."
-        value={searchQuery}
-        onChange={handleSearch}
-        className="border-2 p-2 rounded-lg w-5/12 hover:border-black hover:shadow-xl font-semibold mb-5"
-      />
-      <select
-        value={typeFilter}
-        onChange={handleTypeFilter}
-        className="border-2 p-2 rounded-lg mb-5"
-      >
-        <option value="">All</option>
-        <option value="grass">Grass</option>
-        <option value="fire">Fire</option>
-        <option value="water">Water</option>
-        <option value="poison">Poison</option>
-        <option value="bug">Bug</option>
-        <option value="rock">Rock</option>
-        <option value="electric">Electric</option>
-        <option value="fairy">Fairy</option>
-        <option value="psychic">Psychic</option>
-        <option value="ghost">Ghost</option>
-        <option value="ground">Ground</option>
-        <option value="dark">Dark</option>
-        <option value="steel">Steel</option>
-        <option value="ice">Ice</option>
-        <option value="flying">Flying</option>
-        <option value="normal">Normal</option>
-        <option value="fighting">Fighting</option>
-        <option value="dragon">Dragon</option>
-      </select>
+      <div className="flex justify-center items-center gap-1">
+        <input
+          type="text"
+          placeholder="Search Pokemon..."
+          value={searchQuery}
+          onChange={handleSearch}
+          className="border-2 p-2 rounded-lg w-96 hover:border-black hover:shadow-xl font-semibold mb-5"
+        />
+        <select
+          value={typeFilter}
+          onChange={handleTypeFilter}
+          className="border-2 p-2 rounded-lg mb-5"
+        >
+          <option value="">All</option>
+          <option value="grass">Grass</option>
+          <option value="fire">Fire</option>
+          <option value="water">Water</option>
+          <option value="poison">Poison</option>
+          <option value="bug">Bug</option>
+          <option value="rock">Rock</option>
+          <option value="electric">Electric</option>
+          <option value="fairy">Fairy</option>
+          <option value="psychic">Psychic</option>
+          <option value="ghost">Ghost</option>
+          <option value="ground">Ground</option>
+          <option value="dark">Dark</option>
+          <option value="steel">Steel</option>
+          <option value="ice">Ice</option>
+          <option value="flying">Flying</option>
+          <option value="normal">Normal</option>
+          <option value="fighting">Fighting</option>
+          <option value="dragon">Dragon</option>
+        </select>
+      </div>
       <div className="flex justify-between items-center w-5/12 mb-5">
         <select
           value={sortCriteria}
